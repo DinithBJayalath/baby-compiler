@@ -8,19 +8,19 @@ namespace
         virtual ~ExprAST() = default;
     };
 
-    class NumberExprAST {
+    class NumberExprAST : public ExprAST {
         double val;
     public:
         NumberExprAST(double val) : val(val) {}
     };
 
-    class VariableExprAST {
+    class VariableExprAST : public ExprAST {
         std::string name;
     public:
         VariableExprAST(const std::string &name) : name(name) {}
     };
 
-    class BinaryExprAST {
+    class BinaryExprAST : public ExprAST {
         char op;
         std::unique_ptr<ExprAST> lhs , rhs;
     public:
@@ -31,7 +31,7 @@ namespace
         ) : op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
     };
 
-    class CallExprAST {
+    class CallExprAST : public ExprAST {
         std::string callee;
         std::vector<std::unique_ptr<ExprAST>> args;
     public:
