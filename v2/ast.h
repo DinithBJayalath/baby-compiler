@@ -1,3 +1,4 @@
+#include "llvm/IR/Value.h"
 #include <string>
 #include <vector>
 
@@ -6,12 +7,14 @@ namespace
     class ExprAST {
     public:
         virtual ~ExprAST() = default;
+        virtual llvm::Value *codegen();
     };
 
     class NumberExprAST : public ExprAST {
         double val;
     public:
         NumberExprAST(double val) : val(val) {}
+        llvm::Value *codegen() override;
     };
 
     class VariableExprAST : public ExprAST {

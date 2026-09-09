@@ -1,8 +1,15 @@
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/IRBuilder.h"
 #include "map"
 #include "ast.h"
 #include "lexer.cpp"
 
 static int curTok;
+static std::unique_ptr<llvm::LLVMContext> context;
+static std::unique_ptr<llvm::IRBuilder<>> builder;
+static std::unique_ptr<llvm::Module> theModule;
+static std::map<std::string, llvm::Value> namedValues;
 
 static int getNextTok() {
     return curTok = getTok();
@@ -15,6 +22,11 @@ std::unique_ptr<ExprAST> logErr(const char *Str) {
 
 std::unique_ptr<PrototypeAST> logErrP(const char *Str) {
     fprintf(stderr, "Error : %s\n", Str);
+    return nullptr;
+}
+
+llvm::Value *logErrV(const char *Str) {
+    logErr(Str);
     return nullptr;
 }
 
