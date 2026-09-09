@@ -142,9 +142,59 @@ static std::unique_ptr<ExprAST> parseExpression() {
     return parseBinaryOpRHS(0, std::move(lhs));
 }
 
+static void handleDefinition() {
+  if (parseDefinition()) {
+    fprintf(stderr, "Parsed a function definition.\n");
+  } else {
+    getNextTok();
+  }
+}
+
+static void handleExtern() {
+  if (parseExtern()) {
+    fprintf(stderr, "Parsed an extern\n");
+  } else {
+    getNextTok();
+  }
+}
+
+static void handleTopLevelExpr() {
+  if (parseTopLevelExpr()) {
+    fprintf(stderr, "Parsed a top-level expr\n");
+  } else {
+    getNextTok();
+  }
+}
+
+static void mainLoop() {
+    while (true) {
+        fprintf(stderr, "ready>");
+        switch (curTok) {
+        case tk_eof:
+            return;
+        case ';':
+            getNextTok();
+            break;
+        case tk_def:
+            handleDefinition();
+            break;
+        case tk_extern:
+            handleExtern();
+            break;
+        default:
+            handleTopLevelExpr();
+            break;
+        }
+    }
+}
+
 int main() {
     binaryOpPrecedence['<'] = 10;
     binaryOpPrecedence['+'] = 20;
     binaryOpPrecedence['-'] = 30;
     binaryOpPrecedence['*'] = 40;
+    fprintf(stderr, "ready>");
+    getNextTok();
+    mainLoop();
+    return 0;
 }
