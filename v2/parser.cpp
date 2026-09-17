@@ -1,3 +1,5 @@
+#include "llvm/ADT/APFloat.h"
+#include "llvm/IR/Constant.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
@@ -5,11 +7,13 @@
 #include "ast.h"
 #include "lexer.cpp"
 
+using namespace llvm;
+
 static int curTok;
-static std::unique_ptr<llvm::LLVMContext> context;
-static std::unique_ptr<llvm::IRBuilder<>> builder;
-static std::unique_ptr<llvm::Module> theModule;
-static std::map<std::string, llvm::Value> namedValues;
+static std::unique_ptr<LLVMContext> context;
+static std::unique_ptr<IRBuilder<>> builder;
+static std::unique_ptr<Module> theModule;
+static std::map<std::string, Value *> namedValues;
 
 static int getNextTok() {
     return curTok = getTok();
@@ -25,7 +29,7 @@ std::unique_ptr<PrototypeAST> logErrP(const char *Str) {
     return nullptr;
 }
 
-llvm::Value *logErrV(const char *Str) {
+Value *logErrV(const char *Str) {
     logErr(Str);
     return nullptr;
 }
@@ -152,6 +156,57 @@ static std::unique_ptr<ExprAST> parseExpression() {
     auto lhs = primeryParser();
     if (!lhs) return nullptr;
     return parseBinaryOpRHS(0, std::move(lhs));
+}
+
+Value *NumberExprAST::codegen() {
+    return ConstantFP::get(*context, APFloat(val));
+}
+
+Value *VariableExprAST::codegen() {
+    Value *v = namedValues[name];
+    if (!v) {
+        logErrV("Unknown variable name");
+    }
+    return v;
+}
+
+Value *BinaryExprAST::codegen() {
+    Value *l = lhs->codegen();
+    Value *r = rhs->codegen();
+    if (!l || !r) {
+        return nullptr;
+    }
+    switch (op) {
+    case '+':
+        return builder->CreateFAdd(l, r, "addtmp");
+    case '-':
+        return builder->CreateFSub(l, r, "subtmp");
+    case '*':
+        return builder->CreateFMul(l, r, "multmp");
+    case '<':
+        l = builder->CreateFCmpULT(l, r, "cmptmp");
+        return builder->CreateUIToFP(l, Type::getDoubleTy(*context), "booltmp");
+    default:
+        return logErrV("Invalid boolean operator");
+    }
+}
+
+Value *CallExprAST::codegen() {
+    Function *calleeF = theModule->getFunction(callee);
+    if (!calleeF) {
+        return logErrV("Unknown function");
+    }
+    if (calleeF->arg_size() == args.size()) {
+        return logErrV("Invalid number of arguments");
+    }
+    std::vector<Value *> argsV;
+    for (unsigned i = 0, e = args.size(); i != e; ++i) {
+        argsV.push_back(args[i]->codegen());
+        if (!argsV.back()) {
+            return nullptr;
+        }
+    }
+    return builder->CreateCall(calleeF, argsV, "calltmp");
 }
 
 static void handleDefinition() {

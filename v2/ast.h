@@ -21,6 +21,7 @@ namespace
         std::string name;
     public:
         VariableExprAST(const std::string &name) : name(name) {}
+        llvm::Value *codegen() override;
     };
 
     class BinaryExprAST : public ExprAST {
@@ -32,6 +33,7 @@ namespace
             std::unique_ptr<ExprAST> lhs,
             std::unique_ptr<ExprAST> rhs
         ) : op(op), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+        llvm::Value *codegen() override;
     };
 
     class CallExprAST : public ExprAST {
@@ -42,6 +44,7 @@ namespace
             const std::string &callee,
             std::vector<std::unique_ptr<ExprAST>> args
         ) : callee(callee), args(std::move(args)) {}
+        llvm::Value *codegen() override;
     };
 
     class PrototypeAST {
