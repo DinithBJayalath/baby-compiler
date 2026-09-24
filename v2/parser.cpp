@@ -249,6 +249,12 @@ Function *FunctionAST::codegen() {
     return nullptr;
 }
 
+static void initialiseModule() {
+    context = std::make_unique<LLVMContext>();
+    theModule = std::make_unique<Module>("JIT", *context);
+    builder = std::make_unique<IRBuilder<>>(*context);
+}
+
 static void handleDefinition() {
   if (parseDefinition()) {
     fprintf(stderr, "Parsed a function definition.\n");
@@ -302,6 +308,7 @@ int main() {
     binaryOpPrecedence['*'] = 40;
     fprintf(stderr, "ready>");
     getNextTok();
+    initialiseModule();
     mainLoop();
     return 0;
 }
