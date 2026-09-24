@@ -56,6 +56,7 @@ namespace
             std::vector<std::unique_ptr<ExprAST>> args
         ) : name(name), args(std::move(args)) {}
         const std::string &getName() const {return name;}
+        virtual llvm::Function *codegen();
     };
 
     class FunctionAST {
@@ -66,5 +67,6 @@ namespace
             std::unique_ptr<PrototypeAST> proto,
             std::unique_ptr<ExprAST> body
         ) : proto(std::move(proto)), body(std::move(body)) {}
+        virtual llvm::Function *codegen();
     };
 }

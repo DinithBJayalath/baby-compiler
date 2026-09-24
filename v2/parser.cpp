@@ -1,8 +1,11 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Constant.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
 #include "map"
 #include "ast.h"
 #include "lexer.cpp"
@@ -207,6 +210,43 @@ Value *CallExprAST::codegen() {
         }
     }
     return builder->CreateCall(calleeF, argsV, "calltmp");
+}
+
+Function *PrototypeAST::codegen() {
+    std::vector<Type *> Doubles(args.size(), Type::getDoubleTy(*context));
+    FunctionType *ft = FunctionType::get(Type::getDoubleTy(*context), Doubles, false);
+    Function *f = Function::Create(ft, Function::ExternalLinkage, name, theModule.get());
+    unsigned idx = 0;
+    for (auto &arg : f->args()) {
+        // arg.setName(args[idx++]); //Todo:: fix setName data type error
+    }
+    return f;
+}
+
+Function *FunctionAST::codegen() {
+    Function *function = theModule->getFunction(proto->getName());
+    if (!function) {
+        function = proto->codegen();
+    }
+    if (!function) {
+        return nullptr;
+    }
+    if (!function->empty()) {
+        return (Function *)logErrV("Function can not be redefined!");
+    }
+    BasicBlock *bb = BasicBlock::Create(*context, "entity", function);
+    builder->SetInsertPoint(bb);
+    namedValues.clear();
+    for (auto &arg : function->args()) {
+        // namedValues[std::string(arg.getname())] = &arg;
+    }
+    if (Value *retVal = body->codegen()) {
+        builder->CreateRet(retVal);
+        verifyFunction(*function);
+        return function;
+    }
+    function->eraseFromParent();
+    return nullptr;
 }
 
 static void handleDefinition() {
