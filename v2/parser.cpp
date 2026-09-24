@@ -218,7 +218,7 @@ Function *PrototypeAST::codegen() {
     Function *f = Function::Create(ft, Function::ExternalLinkage, name, theModule.get());
     unsigned idx = 0;
     for (auto &arg : f->args()) {
-        // arg.setName(args[idx++]); //Todo:: fix setName data type error
+        arg.setName(args[idx++]);
     }
     return f;
 }
@@ -238,7 +238,7 @@ Function *FunctionAST::codegen() {
     builder->SetInsertPoint(bb);
     namedValues.clear();
     for (auto &arg : function->args()) {
-        // namedValues[std::string(arg.getname())] = &arg;
+        namedValues[std::string(arg.getName())] = &arg;
     }
     if (Value *retVal = body->codegen()) {
         builder->CreateRet(retVal);

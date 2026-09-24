@@ -49,11 +49,11 @@ namespace
 
     class PrototypeAST {
         std::string name;
-        std::vector<std::unique_ptr<ExprAST>> args;
+        std::vector<std::string> args;
     public:
         PrototypeAST(
             const std::string name,
-            std::vector<std::unique_ptr<ExprAST>> args
+            std::vector<std::string> args
         ) : name(name), args(std::move(args)) {}
         const std::string &getName() const {return name;}
         virtual llvm::Function *codegen();
